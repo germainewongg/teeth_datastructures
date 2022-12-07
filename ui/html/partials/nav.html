@@ -4,6 +4,13 @@
     <h1>Teethbusters</h1>
   </div>
 
+    {{if and .ID (not .Admin)}}
+      <div>
+        <a href="/user/updateUser/{{.ID}}">Update details</a>
+      </div>
+    {{end}}
+
+
     {{if not .Session}}
     <div>
       <a href="/user/signup">Sign up</a>

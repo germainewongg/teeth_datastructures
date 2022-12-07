@@ -7,6 +7,7 @@ import (
 func (app *application) render(w http.ResponseWriter, status int, page string, data *templateData) {
 	ts, ok := app.templateCache[page]
 	if !ok {
+		app.errorLog.Print("Template not found")
 		app.notFound(w)
 		return
 	}

@@ -1,0 +1,33 @@
+{{define "title"}}Patients{{end}}
+
+{{define "main"}}
+
+<div>
+  <h1>All patients</h1>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">ID</th>
+        <th scope="col">PatientName</th>
+        <th scope="col">Username</th>
+        <th scope="col">Email</th>
+      </tr>
+    </thead>
+    <tbody class="table-group-divider">
+      {{range .Users.Patients}}
+        <tr>
+          <td>{{.ID}}</td>
+          <td>{{.Name}}</td>
+          <td>{{.Username}}</td>
+          <td>{{.Email}}</td>
+          <td><a href="/admin/deleteUser/{{.ID}}">Delete User</a></td>
+          <td><a href="/admin/updateUser/{{.ID}}">Edit User</a></td>
+        </tr>
+        {{else}}
+      </tbody>
+    </table>
+    <p>No users yet</p>
+    {{end}}
+</div>
+
+{{end}}

@@ -2,32 +2,60 @@
 
 {{define "main"}}
 
-<div>
-  <h1>All patients</h1>
-  <table class="table">
-    <thead>
-      <tr>
-        <th scope="col">ID</th>
-        <th scope="col">PatientName</th>
-        <th scope="col">Username</th>
-        <th scope="col">Email</th>
-      </tr>
-    </thead>
-    <tbody class="table-group-divider">
-      {{range .Users.Patients}}
-        <tr>
-          <td>{{.ID}}</td>
-          <td>{{.Name}}</td>
-          <td>{{.Username}}</td>
-          <td>{{.Email}}</td>
-          <td><a href="/admin/deleteUser/{{.ID}}">Delete User</a></td>
-          <td><a href="/admin/updateUser/{{.ID}}">Edit User</a></td>
-        </tr>
-        {{else}}
-      </tbody>
-    </table>
-    <p>No users yet</p>
+<h1>All patients</h1>
+{{if .Users.Patients}}
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">PatientName</th>
+      <th scope="col">Username</th>
+      <th scope="col">Email</th>
+    </tr>
+  </thead>
+  <tbody class="table-group-divider">
+    {{range .Users.Patients}}
+    <tr>
+      <td>{{.ID}}</td>
+      <td>{{.Name}}</td>
+      <td>{{.Username}}</td>
+      <td>{{.Email}}</td>
+      <td><a href="/admin/deleteUser/{{.ID}}">Delete User</a></td>
+      <td><a href="/admin/updateUser/{{.ID}}">Edit User</a></td>
+    </tr>
     {{end}}
-</div>
+    {{else}}
+  </tbody>
+</table>
+<p>No users yet</p>
+{{end}}
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Patient Name</th>
+      <th scope="col">Appointment ID</th>
+      <th scope="col">Time</th>
+      <th scope="col">PatientID</th>
+    </tr>
+  </thead>
+  <tbody class="table-group-divider">
+  {{if .Appointments}}
+    {{range .Appointments}}
+      <tr>
+        <td>{{.PatientName}}</td>
+        <td>{{.AppointmentID}}</td>
+        <td>{{.StartTime}}</td>
+        <td>{{.PatientID}}</td>
+        <td><a href="/admin/deleteAppointment/{{.AppointmentID}}">Delete Appointment</a></td>
+        <td><a href="/admin/updateAppointment/{{.AppointmentID}}">Update Appointment</a></td>
+      </tr>
+    {{end}}
+  </tbody>
+</table>
+{{else}}
+  <p>No appointments yet</p>
+{{end}}
+
 
 {{end}}

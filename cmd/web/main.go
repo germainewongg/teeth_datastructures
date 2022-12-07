@@ -14,6 +14,7 @@ type application struct {
 	infoLog       *log.Logger
 	templateCache map[string]*template.Template
 	users         *model.Users
+	appointments  *model.Appointments
 }
 
 func main() {
@@ -46,11 +47,17 @@ func main() {
 		infoLog.Print("ADMIN CREATED")
 	}
 
+	appointments := &model.Appointments{}
+	bookings := []*model.Appointment{}
+	appointments.Bookings = bookings
+	appointments.LoadAppointments()
+
 	app := &application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		templateCache: templateCache,
 		users:         users,
+		appointments:  appointments,
 	}
 
 	srv := &http.Server{

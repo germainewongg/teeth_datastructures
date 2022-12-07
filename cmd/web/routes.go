@@ -27,6 +27,16 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/admin/updateUser/:id", app.adminUpdatePost)
 	router.HandlerFunc(http.MethodGet, "/admin/deleteUser/:id", app.adminDelete)
 
+	router.HandlerFunc(http.MethodGet, "/user/createAppointment/:id", app.createAppointmentUser)
+	router.HandlerFunc(http.MethodPost, "/user/createAppointment/:id", app.createAppointmentUserPost)
+	router.HandlerFunc(http.MethodGet, "/user/updateAppointment/:id/:appointmentID", app.userUpdateAppointment)
+	router.HandlerFunc(http.MethodPost, "/user/updateAppointment/:id/:appointmentID", app.userUpdateAppointmentPost)
+	router.HandlerFunc(http.MethodGet, "/user/deleteAppointment/:id/:appointmentID", app.userDeleteAppointment)
+
+	router.HandlerFunc(http.MethodGet, "/admin/updateAppointment/:appointmentID", app.adminUpdateAppointment)
+	router.HandlerFunc(http.MethodPost, "/admin/updateAppointment/:appointmentID", app.adminUpdateAppointmentPost)
+	router.HandlerFunc(http.MethodGet, "/admin/deleteAppointment/:appointmentID", app.AdminDeleteAppointment)
+
 	return router
 
 }

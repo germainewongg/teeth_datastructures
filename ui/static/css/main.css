@@ -1,0 +1,80 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Ubuntu Mono", monospace;
+}
+
+html, body {
+  height: 100%;
+}
+
+
+body {
+  line-height: 1.5;
+  background-color: #edf2f4;
+  color: #0B2545;
+  overflow-y: scroll;
+}
+
+header, nav, main, footer {
+  padding: 2px calc((100% - 800px) / 2) 0;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #E4E5E7;
+}
+
+nav h1 {
+  color: #06D6A0;
+}
+
+nav a {
+  margin-left: 5px;
+  text-decoration: none;
+  color: #06D6A0;
+}
+
+nav a:hover {
+  color: RGB(226, 27, 112);
+}
+
+form {
+  text-align: center;
+}
+
+input[type="text"] {
+  width: 150px;
+  height: 20px;
+}
+
+form button {
+  width: 100px;
+  height: 25px;
+  margin-top: 30px;
+  background-color: #06D6A0;
+}
+
+form button:hover {
+  background-color: RGB(226, 27, 112);
+  color: white;
+  border: 1px solid white;
+  cursor: pointer;
+}
+
+.error {
+  color: #C0392B;
+  font-weight: bold;
+  display: block;
+}
+
+.logout {
+  color: #C0392B;
+}
+
+.logout:hover {
+  font-weight: bold;
+  color: #f77f00;
+}

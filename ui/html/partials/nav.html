@@ -1,0 +1,27 @@
+{{define "nav"}}
+<nav>
+  <div>
+    <h1>Teethbusters</h1>
+  </div>
+
+    {{if not .Session}}
+    <div>
+      <a href="/user/signup">Sign up</a>
+      <a href="/user/login">Login</a>
+    </div>
+    {{else}}
+    <div>
+      <a href="/user/appointmentCreate/{{.ID}}">Make appointment</a>
+    </div>
+
+    {{end}}
+
+
+    {{if .Session}}
+    <div>
+      <a href="/" class="logout">Logout</a>
+    </div>
+    {{end}}
+</nav>
+
+{{end}}

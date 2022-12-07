@@ -1,0 +1,23 @@
+{{define "title"}}Create appointment{{end}}
+
+{{define "main"}}
+<form action="/user/createAppointment/{{.ID}}" method="post">
+  {{if .AppointmentModel.Timeslots}}
+    <div>
+      <label>Time (1 hour timeslots):</label>
+      <select name="time">
+      {{range .AppointmentModel.Timeslots}}
+        <option value="{{.}}">{{.}}</option>
+      {{end}}
+      </select>
+    </div>
+  {{else}}
+    <div>
+      <h3>No more open appointment slots</h3>
+    </div>
+  {{end}}
+  <div>
+    <button type="submit">Book</button>
+  </div>
+</form>
+{{end}}

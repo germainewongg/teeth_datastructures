@@ -17,6 +17,11 @@ type userForm struct {
 	validator.Validator
 }
 
+type appointmentForm struct {
+	StartTime string
+	validator.Validator
+}
+
 type loginForm struct {
 	Username string
 	Password string
@@ -137,6 +142,7 @@ func (app *application) userView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.ID = id
 	data.Admin = false
+	data.Appointments = app.appointments.UserAppointments(id)
 	app.render(w, http.StatusOK, "view.html", data)
 }
 
@@ -144,6 +150,9 @@ func (app *application) adminView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Users = app.users
 	data.Admin = true
+	data.AppointmentModel = app.appointments
+	data.Appointments = app.appointments.Bookings
+
 	app.render(w, http.StatusOK, "patients.html", data)
 }
 
@@ -252,6 +261,159 @@ func (app *application) adminUpdatePost(w http.ResponseWriter, r *http.Request) 
 	err = app.users.UpdateUser(userID, form.Name, form.Username, form.Email)
 	if err != nil {
 		app.errorLog.Print("Failed to update")
+		return
+	}
+
+	http.Redirect(w, r, "/admin/view", http.StatusSeeOther)
+
+}
+
+func (app *application) createAppointmentUser(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id := params.ByName("id")
+
+	data := app.newTemplateData(r)
+	data.ID = id
+	data.AppointmentModel = app.appointments
+	form := &appointmentForm{}
+	data.Form = form
+	app.render(w, http.StatusOK, "createAppointment.html", data)
+
+}
+
+func (app *application) createAppointmentUserPost(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id := params.ByName("id")
+
+	err := r.ParseForm()
+	if err != nil {
+		app.errorLog.Print("failed to parseform appointment create")
+		return
+	}
+
+	form := &appointmentForm{
+		StartTime: r.PostForm.Get("time"),
+	}
+	form.IsBlank(form.StartTime, "time")
+	if valid := form.Valid(); !valid {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "createAppointment.html", data)
+		return
+	}
+
+	user, err := app.users.GetUser(id)
+	if err != nil {
+		app.errorLog.Print("Failed to obtain user")
+		app.serverError(w, http.StatusInternalServerError)
+		return
+	}
+
+	// Create the appointment
+	appointmentID, err := app.appointments.CreateAppointment(id, user.Name, form.StartTime)
+	if err != nil {
+		app.errorLog.Printf("Failed to create appointment: %v", err.Error())
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.AppointmentID = appointmentID
+	data.Form = form
+	data.ID = id
+
+	http.Redirect(w, r, fmt.Sprintf("/user/view/%v", id), http.StatusSeeOther)
+
+}
+
+func (app *application) userUpdateAppointment(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id := params.ByName("id")
+	appointmentID := params.ByName("appointmentID")
+
+	data := app.newTemplateData(r)
+	data.ID = id // Appointment id
+	data.AppointmentModel = app.appointments
+	data.AppointmentID = appointmentID
+	app.render(w, http.StatusOK, "updateAppointmentUser.html", data)
+}
+
+func (app *application) userUpdateAppointmentPost(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id := params.ByName("id")
+	appointmentID := params.ByName("appointmentID")
+
+	err := r.ParseForm()
+	if err != nil {
+		app.serverError(w, http.StatusUnprocessableEntity)
+		return
+	}
+
+	form := &appointmentForm{
+		StartTime: r.PostForm.Get("time"),
+	}
+
+	err = app.appointments.UpdateAppointment(appointmentID, form.StartTime)
+	if err != nil {
+		app.serverError(w, http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/user/view/%v", id), http.StatusSeeOther)
+
+}
+
+func (app *application) userDeleteAppointment(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id := params.ByName("id")
+	appointmentID := params.ByName("appointmentID")
+
+	err := app.appointments.DeleteAppointment(appointmentID)
+	if err != nil {
+		app.serverError(w, http.StatusInternalServerError)
+	}
+	http.Redirect(w, r, fmt.Sprintf("/user/view/%v", id), http.StatusSeeOther)
+}
+
+func (app *application) AdminDeleteAppointment(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	appointmentID := params.ByName("appointmentID")
+
+	err := app.appointments.DeleteAppointment(appointmentID)
+	if err != nil {
+		app.serverError(w, http.StatusInternalServerError)
+	}
+	http.Redirect(w, r, "admin/view", http.StatusSeeOther)
+}
+
+func (app *application) adminUpdateAppointment(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id := params.ByName("id")
+	appointmentID := params.ByName("appointmentID")
+
+	data := app.newTemplateData(r)
+	data.ID = id // Appointment id
+	data.AppointmentModel = app.appointments
+	data.AppointmentID = appointmentID
+	app.render(w, http.StatusOK, "updateAppointmentUser.html", data)
+}
+
+func (app *application) adminUpdateAppointmentPost(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	appointmentID := params.ByName("appointmentID")
+
+	err := r.ParseForm()
+	if err != nil {
+		app.serverError(w, http.StatusUnprocessableEntity)
+		return
+	}
+
+	form := &appointmentForm{
+		StartTime: r.PostForm.Get("time"),
+	}
+
+	err = app.appointments.UpdateAppointment(appointmentID, form.StartTime)
+	if err != nil {
+		app.serverError(w, http.StatusInternalServerError)
 		return
 	}
 

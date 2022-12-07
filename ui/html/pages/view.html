@@ -2,7 +2,30 @@
 
 {{define "main"}}
 <div>
-  <h1>BUILD IN PROGRESS</h1>
+  <h1>Your appointments</h1>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Patient Name</th>
+        <th scope="col">Appointment ID</th>
+        <th scope="col">Time</th>
+        <th scope="col">PatientID</th>
+      </tr>
+    </thead>
+    <tbody class="table-group-divider">
+      {{range .Appointments}}
+        <tr>
+          <td>{{.PatientName}}</td>
+          <td>{{.AppointmentID}}</td>
+          <td>{{.StartTime}}</td>
+          <td>{{.PatientID}}</td>
+          <td><a href="/user/deleteAppointment/{{.PatientID}}/{{.AppointmentID}}">Delete Appointment</a></td>
+          <td><a href="/user/updateAppointment/{{.PatientID}}/{{.AppointmentID}}">Update Appointment</a></td>
+        </tr>
+        {{else}}
+      </tbody>
+    </table>
+    <p>No appointments yet</p>
+  {{end}}
 </div>
-
 {{end}}

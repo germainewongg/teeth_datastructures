@@ -9,14 +9,14 @@ import (
 
 // There might be situations where we want to output multiple pieces of data.
 type templateData struct {
-	Users         *model.Users
-	Form          any
-	Session       string
-	ID            string
-	AppointmentID string
-	Admin         bool
-	// Appointments     []*model.Appointment
-	// AppointmentModel *model.Appointments
+	Users            *model.Users
+	Form             any
+	Session          string
+	ID               string
+	AppointmentID    string
+	Admin            bool
+	Appointments     []*model.Appointment
+	AppointmentModel *model.Appointments
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {

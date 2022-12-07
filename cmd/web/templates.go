@@ -3,16 +3,18 @@ package main
 import (
 	"net/http"
 	"path/filepath"
+	"teeth_datastructures/internal/model"
 	"text/template"
 )
 
 // There might be situations where we want to output multiple pieces of data.
 type templateData struct {
-	// user             *model.User
+	Users         *model.Users
 	Form          any
 	Session       string
 	ID            string
 	AppointmentID string
+	Admin         bool
 	// Appointments     []*model.Appointment
 	// AppointmentModel *model.Appointments
 }

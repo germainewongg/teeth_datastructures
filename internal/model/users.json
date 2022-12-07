@@ -1,0 +1,18 @@
+[
+ {
+  "ID": "7413b94a-0283-4629-82c4-2aefee32b452",
+  "Name": "Admin",
+  "Username": "admin",
+  "HashedPassword": "JDJhJDEyJGhNeWNzanpRSEJGT3ZLWFBoNFF1Yy5ydnBRQmZtUzYxVHplSU9rNHdKZmQweGpMN2pWejVT",
+  "Email": "",
+  "Admin": true
+ },
+ {
+  "ID": "fd6e053a-d515-4f78-a96f-1f14ce98334e",
+  "Name": "panda",
+  "Username": "panda",
+  "HashedPassword": "JDJhJDEyJDQyTkdVTXE1bkFoRERwdWl2S0cwRS42ZS9SWmlIRE9WcGt6YlJyUlpscm8vOU1kaTFHbm0u",
+  "Email": "panda@gmail.com",
+  "Admin": false
+ }
+]

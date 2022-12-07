@@ -1,0 +1,34 @@
+{{define "title"}}LOGIN{{end}}
+
+{{define "main"}}
+<form action="/user/login" method="post">
+  <div>
+    <label>Username:</label>
+    {{with .Form.FieldErrors.username}}
+      <label class="error">{{.}}</label>
+    {{end}}
+
+    {{with .Form.NonFieldErrors}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type="text" name="username">
+  </div>
+
+  <div>
+    <label>Password:</label>
+    {{with .Form.FieldErrors.password}}
+      <label class="error">{{.}}</label>
+    {{end}}
+
+    {{with .Form.NonFieldErrors}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type="password" name="password" >
+  </div>
+
+  <div>
+    <button type="submit">LOGIN</button>
+  </div>
+</form>
+
+{{end}}

@@ -1,0 +1,42 @@
+{{define "title"}}UPDATE USER{{end}}
+
+{{define "main"}}
+<form action="/user/updateUser/{{.ID}}" method="post">
+  <div>
+    <label>Name:</label>
+    {{if .Form.FieldErrors.name}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type="text" name="name">
+  </div>
+
+  <div>
+    <label>Username:</label>
+    {{with .Form.FieldErrors.username}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type="text" name="username">
+  </div>
+
+  <div>
+    <label>Email:</label>
+    {{with .Form.FieldErrors.email}}
+      <label class="error">{{.}}</label>
+   {{end}}
+    <input type="text" name="email">
+  </div>
+
+  <div>
+    {{with .Form.FieldErrors.password}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <label>Password:</label>
+    <input type="password" name="password">
+  </div>
+
+  <div>
+    <button type="submit">Sign up</button>
+  </div>
+</form>
+
+{{end}}

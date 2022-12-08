@@ -15,6 +15,7 @@ type application struct {
 	templateCache map[string]*template.Template
 	users         *model.Users
 	appointments  *model.Appointments
+	sessions      *model.Sessions
 }
 
 func main() {
@@ -52,12 +53,17 @@ func main() {
 	appointments.Bookings = bookings
 	appointments.LoadAppointments()
 
+	sessions := &model.Sessions{}
+	stores := []*model.Session{}
+	sessions.Sessions = stores
+
 	app := &application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		templateCache: templateCache,
 		users:         users,
 		appointments:  appointments,
+		sessions:      sessions,
 	}
 
 	srv := &http.Server{

@@ -8,11 +8,10 @@
       <div>
         <a href="/user/updateUser/{{.ID}}">Update details</a>
       </div>
+      <div>
+        <a href="/user/createAppointment/{{.ID}}"">Make appointment</a>
+      </div>
     {{end}}
-
-    <div>
-      <a href="/user/createAppointment/{{.ID}}">Make appointment</a>
-    </div>
 
 
     {{if not .Session}}
@@ -20,11 +19,6 @@
       <a href="/user/signup">Sign up</a>
       <a href="/user/login">Login</a>
     </div>
-    {{else}}
-    <div>
-      <a href="/user/appointmentCreate/{{.ID}}">Make appointment</a>
-    </div>
-
     {{end}}
 
 

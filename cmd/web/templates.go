@@ -17,6 +17,7 @@ type templateData struct {
 	Admin            bool
 	Appointments     []*model.Appointment
 	AppointmentModel *model.Appointments
+	Sessions         *model.Sessions
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {

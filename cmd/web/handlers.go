@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"teeth_datastructures/internal/model"
 	"teeth_datastructures/internal/validator"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -30,6 +33,7 @@ type loginForm struct {
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
+
 	app.render(w, http.StatusOK, "home.html", data)
 }
 
@@ -77,6 +81,22 @@ func (app *application) signupPost(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, http.StatusNotFound)
 		return
 	}
+
+	// Set sessions and cookies
+	sessionToken := uuid.NewString()
+	expiresAt := time.Now().Add(900 * time.Minute)
+	session := &model.Session{
+		Username: sessionToken,
+		Expiry:   expiresAt,
+	}
+	app.sessions.Store(session)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   sessionToken,
+		Expires: expiresAt,
+	})
+
 	if isAdmin.Admin {
 		http.Redirect(w, r, "/admin/patients", http.StatusSeeOther)
 	} else {
@@ -125,6 +145,21 @@ func (app *application) loginPost(w http.ResponseWriter, r *http.Request) {
 		app.render(w, http.StatusUnauthorized, "login.html", data)
 		return
 	}
+	// Set sessions and cookies
+	sessionToken := uuid.NewString()
+	expiresAt := time.Now().Add(900 * time.Minute)
+	session := &model.Session{
+		Username: sessionToken,
+		Expiry:   expiresAt,
+	}
+	app.sessions.Store(session)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   sessionToken,
+		Expires: expiresAt,
+		Path:    "/",
+	})
 	if authenticatedUser.Admin {
 		http.Redirect(w, r, "/admin/view", http.StatusSeeOther)
 	} else {
@@ -136,37 +171,68 @@ func (app *application) loginPost(w http.ResponseWriter, r *http.Request) {
 
 // All the views
 func (app *application) userView(w http.ResponseWriter, r *http.Request) {
+
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
 	params := httprouter.ParamsFromContext(r.Context())
 	id := params.ByName("id")
 
 	data := app.newTemplateData(r)
 	data.ID = id
 	data.Admin = false
+	data.Session = validSession.Username
 	data.Appointments = app.appointments.UserAppointments(id)
 	app.render(w, http.StatusOK, "view.html", data)
 }
 
 func (app *application) adminView(w http.ResponseWriter, r *http.Request) {
+
+	// Authenticate
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusOK, "unauthorised.html", data)
+	}
+
 	data := app.newTemplateData(r)
 	data.Users = app.users
 	data.Admin = true
 	data.AppointmentModel = app.appointments
 	data.Appointments = app.appointments.Bookings
 
+	data.Session = validSession.Username
+
 	app.render(w, http.StatusOK, "patients.html", data)
 }
 
 func (app *application) userUpdate(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
 	data := app.newTemplateData(r)
 	data.Form = &loginForm{}
 	data.Admin = false
 	params := httprouter.ParamsFromContext(r.Context())
 	id := params.ByName("id")
 	data.ID = id
+	data.Session = validSession.Username
 	app.render(w, http.StatusOK, "userUpdate.html", data)
 }
 
 func (app *application) userUpdatePost(w http.ResponseWriter, r *http.Request) {
+	_, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
 	params := httprouter.ParamsFromContext(r.Context())
 	userID := params.ByName("id")
 
@@ -210,6 +276,12 @@ func (app *application) userUpdatePost(w http.ResponseWriter, r *http.Request) {
 
 // CRUD admin
 func (app *application) adminDelete(w http.ResponseWriter, r *http.Request) {
+	_, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
 	params := httprouter.ParamsFromContext(r.Context())
 	userID := params.ByName("id")
 
@@ -218,16 +290,28 @@ func (app *application) adminDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) adminUpdate(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
 	params := httprouter.ParamsFromContext(r.Context())
 	id := params.ByName("id")
 
 	data := app.newTemplateData(r)
 	data.Form = &loginForm{}
+	data.Session = validSession.Username
 	data.ID = id
 	app.render(w, http.StatusOK, "adminUpdateUser.html", data)
 }
 
 func (app *application) adminUpdatePost(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
 	params := httprouter.ParamsFromContext(r.Context())
 	userID := params.ByName("id")
 
@@ -235,6 +319,7 @@ func (app *application) adminUpdatePost(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		app.errorLog.Print("error parsing update user form")
 		data := app.newTemplateData(r)
+		data.Session = validSession.Username
 		app.render(w, http.StatusUnprocessableEntity, "/admin/view", data)
 		return
 	}
@@ -254,6 +339,7 @@ func (app *application) adminUpdatePost(w http.ResponseWriter, r *http.Request) 
 	if valid := form.Valid(); !valid {
 		data := app.newTemplateData(r)
 		data.Form = form
+		data.Session = validSession.Username
 		app.render(w, http.StatusUnprocessableEntity, "adminUpdateUser.html", data)
 		return
 	}
@@ -269,6 +355,12 @@ func (app *application) adminUpdatePost(w http.ResponseWriter, r *http.Request) 
 }
 
 func (app *application) createAppointmentUser(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+		return
+	}
 	params := httprouter.ParamsFromContext(r.Context())
 	id := params.ByName("id")
 
@@ -277,11 +369,17 @@ func (app *application) createAppointmentUser(w http.ResponseWriter, r *http.Req
 	data.AppointmentModel = app.appointments
 	form := &appointmentForm{}
 	data.Form = form
+	data.Session = validSession.Username
 	app.render(w, http.StatusOK, "createAppointment.html", data)
 
 }
 
 func (app *application) createAppointmentUserPost(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
 	params := httprouter.ParamsFromContext(r.Context())
 	id := params.ByName("id")
 
@@ -319,6 +417,7 @@ func (app *application) createAppointmentUserPost(w http.ResponseWriter, r *http
 	data := app.newTemplateData(r)
 	data.AppointmentID = appointmentID
 	data.Form = form
+	data.Session = validSession.Username
 	data.ID = id
 
 	http.Redirect(w, r, fmt.Sprintf("/user/view/%v", id), http.StatusSeeOther)
@@ -326,6 +425,11 @@ func (app *application) createAppointmentUserPost(w http.ResponseWriter, r *http
 }
 
 func (app *application) userUpdateAppointment(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
 	params := httprouter.ParamsFromContext(r.Context())
 	id := params.ByName("id")
 	appointmentID := params.ByName("appointmentID")
@@ -334,10 +438,17 @@ func (app *application) userUpdateAppointment(w http.ResponseWriter, r *http.Req
 	data.ID = id // Appointment id
 	data.AppointmentModel = app.appointments
 	data.AppointmentID = appointmentID
+	data.Session = validSession.Username
 	app.render(w, http.StatusOK, "updateAppointmentUser.html", data)
 }
 
 func (app *application) userUpdateAppointmentPost(w http.ResponseWriter, r *http.Request) {
+	_, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
 	params := httprouter.ParamsFromContext(r.Context())
 	id := params.ByName("id")
 	appointmentID := params.ByName("appointmentID")
@@ -363,6 +474,11 @@ func (app *application) userUpdateAppointmentPost(w http.ResponseWriter, r *http
 }
 
 func (app *application) userDeleteAppointment(w http.ResponseWriter, r *http.Request) {
+	_, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
 	params := httprouter.ParamsFromContext(r.Context())
 	id := params.ByName("id")
 	appointmentID := params.ByName("appointmentID")
@@ -375,6 +491,12 @@ func (app *application) userDeleteAppointment(w http.ResponseWriter, r *http.Req
 }
 
 func (app *application) AdminDeleteAppointment(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
 	params := httprouter.ParamsFromContext(r.Context())
 	appointmentID := params.ByName("appointmentID")
 
@@ -382,10 +504,26 @@ func (app *application) AdminDeleteAppointment(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		app.serverError(w, http.StatusInternalServerError)
 	}
-	http.Redirect(w, r, "admin/view", http.StatusSeeOther)
+
+	data := app.newTemplateData(r)
+	data.Users = app.users
+	data.Admin = true
+	data.AppointmentModel = app.appointments
+	data.Appointments = app.appointments.Bookings
+
+	data.Session = validSession.Username
+
+	app.render(w, http.StatusOK, "patients.html", data)
 }
 
 func (app *application) adminUpdateAppointment(w http.ResponseWriter, r *http.Request) {
+
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
 	params := httprouter.ParamsFromContext(r.Context())
 	id := params.ByName("id")
 	appointmentID := params.ByName("appointmentID")
@@ -394,10 +532,16 @@ func (app *application) adminUpdateAppointment(w http.ResponseWriter, r *http.Re
 	data.ID = id // Appointment id
 	data.AppointmentModel = app.appointments
 	data.AppointmentID = appointmentID
-	app.render(w, http.StatusOK, "updateAppointmentUser.html", data)
+	data.Session = validSession.Username
+	app.render(w, http.StatusOK, "adminUpdateAppointment.html", data)
 }
 
 func (app *application) adminUpdateAppointmentPost(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
 	params := httprouter.ParamsFromContext(r.Context())
 	appointmentID := params.ByName("appointmentID")
 
@@ -417,6 +561,79 @@ func (app *application) adminUpdateAppointmentPost(w http.ResponseWriter, r *htt
 		return
 	}
 
-	http.Redirect(w, r, "/admin/view", http.StatusSeeOther)
+	data := app.newTemplateData(r)
+	data.Users = app.users
+	data.Admin = true
+	data.AppointmentModel = app.appointments
+	data.Appointments = app.appointments.Bookings
 
+	data.Session = validSession.Username
+
+	app.render(w, http.StatusOK, "patients.html", data)
+
+}
+
+func (app *application) logout(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("session_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			app.serverError(w, http.StatusUnauthorized)
+			return
+		}
+		app.serverError(w, http.StatusBadRequest)
+		return
+	}
+
+	// sessionToken := c.Value
+	// app.sessions.RemoveSession(sessionToken)
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   "",
+		Expires: time.Now(),
+	})
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *application) adminSessionView(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
+	data := app.newTemplateData(r)
+	data.Users = app.users
+	data.Admin = true
+	data.AppointmentModel = app.appointments
+	data.Appointments = app.appointments.Bookings
+
+	data.Session = validSession.Username
+	data.Sessions = app.sessions
+
+	app.render(w, http.StatusOK, "sessions.html", data)
+}
+
+func (app *application) adminSessionDelete(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
+	params := httprouter.ParamsFromContext(r.Context())
+	sessionToken := params.ByName("sessionID")
+
+	app.sessions.RemoveSession(sessionToken)
+
+	data := app.newTemplateData(r)
+	data.Users = app.users
+	data.Admin = true
+	data.AppointmentModel = app.appointments
+	data.Appointments = app.appointments.Bookings
+
+	data.Session = validSession.Username
+	data.Sessions = app.sessions
+
+	http.Redirect(w, r, "/admin/sessions", http.StatusSeeOther)
+	// app.render(w, http.StatusOK, "sessions.html", data)
 }

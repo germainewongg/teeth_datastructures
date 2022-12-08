@@ -1,0 +1,28 @@
+{{define "title"}}Sessions{{end}}
+
+
+{{define "main"}}
+<div>
+  <h1>Sessions</h1>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Session Token</th>
+        <th scope="col">Expiry</th>
+      </tr>
+    </thead>
+    <tbody class="table-group-divider">
+      {{range .Sessions.Sessions}}
+        <tr>
+          <td>{{.Username}}</td>
+          <td>{{.Expiry}}</td>
+          <td><a href="/admin/sessions/delete/{{.Username}}}">Delete Session</a></td>
+        </tr>
+        {{else}}
+      </tbody>
+    </table>
+    <p>No sessions yet</p>
+  {{end}}
+</div>
+
+{{end}}

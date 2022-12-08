@@ -14,5 +14,13 @@
   "HashedPassword": "JDJhJDEyJDZ6TC5NSmY2ZnFQL3lxUWhqM3R1cGVZMEdWTGNaUGdyWUQ3UHQubWFSTDZtalF4a21NTnl1",
   "Email": "",
   "Admin": true
+ },
+ {
+  "ID": "99c6fd31-39a7-4824-83ab-836c4b05fd01",
+  "Name": "peanut",
+  "Username": "peanut",
+  "HashedPassword": "JDJhJDEyJGtxd1JtWFdtd2VRZTB4UFIzRmVYWHVDY0sydERmU2FzWC5ZQnEwLmF6UU1vNjBPQmU0R2NH",
+  "Email": "peanut@gmail.com",
+  "Admin": false
  }
 ]

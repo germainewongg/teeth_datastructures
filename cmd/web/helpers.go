@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"teeth_datastructures/internal/model"
 )
 
 func (app *application) render(w http.ResponseWriter, status int, page string, data *templateData) {
@@ -11,8 +12,6 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 		app.notFound(w)
 		return
 	}
-
-	w.WriteHeader(status)
 
 	// Execute template and write to body
 	err := ts.ExecuteTemplate(w, "base", data)
@@ -31,4 +30,34 @@ func (app *application) serverError(w http.ResponseWriter, status int) {
 
 func (app *application) notFound(w http.ResponseWriter) {
 	app.serverError(w, http.StatusNotFound)
+}
+
+func (app *application) sessionManagement(w http.ResponseWriter, r *http.Request) (*model.Session, bool) {
+	// Authenticate through sessions
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			// If the cookie is not set, return an unauthorized status
+			app.serverError(w, http.StatusUnauthorized)
+			return nil, false
+		}
+		// For any other type of error, return a bad request status
+		app.serverError(w, http.StatusBadRequest)
+		return nil, false
+	}
+	sessionToken := c.Value
+	valid, validSession := app.sessions.Validate(sessionToken)
+	if !valid {
+		app.serverError(w, http.StatusUnauthorized)
+		return nil, false
+	}
+
+	// Check expiry
+	if expired := validSession.Expired(); expired {
+		app.sessions.RemoveSession(validSession.Username)
+		app.serverError(w, http.StatusUnauthorized)
+		return nil, false
+	}
+
+	return validSession, true
 }

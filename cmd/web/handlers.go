@@ -574,7 +574,7 @@ func (app *application) adminUpdateAppointmentPost(w http.ResponseWriter, r *htt
 }
 
 func (app *application) logout(w http.ResponseWriter, r *http.Request) {
-	c, err := r.Cookie("session_token")
+	_, err := r.Cookie("session_token")
 	if err != nil {
 		if err == http.ErrNoCookie {
 			app.serverError(w, http.StatusUnauthorized)
@@ -584,12 +584,56 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionToken := c.Value
-	app.sessions.RemoveSession(sessionToken)
+	// sessionToken := c.Value
+	// app.sessions.RemoveSession(sessionToken)
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   "",
 		Expires: time.Now(),
 	})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *application) adminSessionView(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
+	data := app.newTemplateData(r)
+	data.Users = app.users
+	data.Admin = true
+	data.AppointmentModel = app.appointments
+	data.Appointments = app.appointments.Bookings
+
+	data.Session = validSession.Username
+	data.Sessions = app.sessions
+
+	app.render(w, http.StatusOK, "sessions.html", data)
+}
+
+func (app *application) adminSessionDelete(w http.ResponseWriter, r *http.Request) {
+	validSession, authenticated := app.sessionManagement(w, r)
+	if !authenticated {
+		data := app.newTemplateData(r)
+		app.render(w, http.StatusUnauthorized, "unauthorised.html", data)
+	}
+
+	params := httprouter.ParamsFromContext(r.Context())
+	sessionToken := params.ByName("sessionID")
+
+	app.sessions.RemoveSession(sessionToken)
+
+	data := app.newTemplateData(r)
+	data.Users = app.users
+	data.Admin = true
+	data.AppointmentModel = app.appointments
+	data.Appointments = app.appointments.Bookings
+
+	data.Session = validSession.Username
+	data.Sessions = app.sessions
+
+	http.Redirect(w, r, "/admin/sessions", http.StatusSeeOther)
+	// app.render(w, http.StatusOK, "sessions.html", data)
 }

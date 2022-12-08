@@ -37,6 +37,8 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/admin/updateAppointment/:appointmentID", app.adminUpdateAppointmentPost)
 	router.HandlerFunc(http.MethodGet, "/admin/deleteAppointment/:appointmentID", app.AdminDeleteAppointment)
 
+	router.HandlerFunc(http.MethodGet, "/admin/sessions", app.adminSessionView)
+	router.HandlerFunc(http.MethodGet, "/admin/sessions/delete/:sessionID", app.adminSessionDelete)
 	return router
 
 }
